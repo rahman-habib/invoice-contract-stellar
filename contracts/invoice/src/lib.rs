@@ -64,7 +64,7 @@ pub struct Invoice {
     pub voided: bool,
     pub sent_invoice_deleted: bool,
     pub received_invoice_deleted: bool,
-    // pub timestamp: u64,
+    pub timestamp: u64,
     pub previous_invoice_hash: String,
     pub txn_hash: String,
     pub due_date: String,
@@ -174,6 +174,7 @@ impl InvoiceContract {
             || invoice_input.lines.is_empty()
             || invoice_input.net_amt.is_empty()
             || invoice_input.txn_hash.is_empty()
+            || invoice_input.timestamp==0
             || invoice_input.due_date.is_empty()
         {
             log!(&env, "Error: One or more input fields are empty");
@@ -217,6 +218,7 @@ impl InvoiceContract {
             voided: false,
             sent_invoice_deleted: false,
             received_invoice_deleted: false,
+            timestamp: invoice_input.timestamp,
             // timestamp: env.ledger().timestamp(),
             previous_invoice_hash: String::from_str(&env, ""),
             txn_hash: invoice_input.txn_hash,
@@ -250,18 +252,16 @@ impl InvoiceContract {
         mongo_id: String,
         action: String,
         txn_hash: String,
+        timestamp: u64,
     ) -> Result<String, InvoiceError> {
-        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty() {
+        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty() ||timestamp==0{
             log!(&env, "Error: One or more input fields are empty");
             return Err(InvoiceError::InvalidInput);
         }
         let mut state = Self::get_invoice_storage(&env);
 
         if let Some(mut invoice) = state.get(mongo_id.clone()) {
-            if invoice.ack {
-                log!(&env, "Invoice {} is already acknowledged", mongo_id);
-                return Err(InvoiceError::InvoiceAcknowledged);
-            }
+           
 
             if let Some(error) = Self::check_invoice_status(
                 invoice.clone(),
@@ -282,6 +282,7 @@ impl InvoiceContract {
             invoice.ack = true;
             invoice.previous_invoice_hash = invoice.txn_hash.clone();
             invoice.txn_hash = txn_hash;
+            invoice.timestamp=timestamp;
             // invoice.timestamp = env.ledger().timestamp();
 
             state.set(mongo_id.clone(), invoice.clone());
@@ -305,8 +306,9 @@ impl InvoiceContract {
         mongo_id: String,
         action: String,
         txn_hash: String,
+        timestamp: u64,
     ) -> Result<String, InvoiceError> {
-        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty() {
+        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty() ||timestamp==0 {
             log!(&env, "Error: One or more input fields are empty");
             return Err(InvoiceError::InvalidInput);
         }
@@ -333,6 +335,7 @@ impl InvoiceContract {
             invoice.ack = true;
             invoice.previous_invoice_hash = invoice.txn_hash.clone();
             invoice.txn_hash = txn_hash;
+            invoice.timestamp=timestamp;
             // invoice.timestamp = env.ledger().timestamp();
 
             state.set(mongo_id.clone(), invoice.clone());
@@ -355,8 +358,9 @@ impl InvoiceContract {
         mongo_id: String,
         action: String,
         txn_hash: String,
+        timestamp: u64,
     ) -> Result<String, InvoiceError> {
-        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty() {
+        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty()||timestamp==0 {
             log!(&env, "Error: One or more input fields are empty");
             return Err(InvoiceError::InvalidInput);
         }
@@ -382,6 +386,7 @@ impl InvoiceContract {
             invoice.rejected = true;
             invoice.previous_invoice_hash = invoice.txn_hash.clone();
             invoice.txn_hash = txn_hash;
+            invoice.timestamp=timestamp;
             // invoice.timestamp = env.ledger().timestamp();
 
             state.set(mongo_id.clone(), invoice.clone());
@@ -404,8 +409,9 @@ impl InvoiceContract {
         mongo_id: String,
         action: String,
         txn_hash: String,
+        timestamp: u64,
     ) -> Result<String, InvoiceError> {
-        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty() {
+        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty()||timestamp==0 {
             log!(&env, "Error: One or more input fields are empty");
             return Err(InvoiceError::InvalidInput);
         }
@@ -430,6 +436,7 @@ impl InvoiceContract {
             invoice.voided = true;
             invoice.previous_invoice_hash = invoice.txn_hash.clone();
             invoice.txn_hash = txn_hash;
+            invoice.timestamp=timestamp;
             // invoice.timestamp = env.ledger().timestamp();
 
             state.set(mongo_id.clone(), invoice.clone());
@@ -453,8 +460,9 @@ impl InvoiceContract {
         finance_id: String,
         action: String,
         txn_hash: String,
+        timestamp: u64,
     ) -> Result<String, InvoiceError> {
-        if mongo_id.is_empty() || action.is_empty() || finance_id.is_empty() || txn_hash.is_empty()
+        if mongo_id.is_empty() || action.is_empty() || finance_id.is_empty() || txn_hash.is_empty()|| timestamp==0
         {
             log!(&env, "Error: One or more input fields are empty");
             return Err(InvoiceError::InvalidInput);
@@ -483,6 +491,7 @@ impl InvoiceContract {
             invoice.financing_details.push_back(finance_id);
             invoice.previous_invoice_hash = invoice.txn_hash.clone();
             invoice.txn_hash = txn_hash;
+            invoice.timestamp=timestamp;
             // invoice.timestamp = env.ledger().timestamp();
 
             state.set(mongo_id.clone(), invoice.clone());
@@ -505,8 +514,9 @@ impl InvoiceContract {
         mongo_id: String,
         action: String,
         txn_hash: String,
+        timestamp: u64,
     ) -> Result<String, InvoiceError> {
-        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty() {
+        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty()|| timestamp==0 {
             log!(&env, "Error: One or more input fields are empty");
             return Err(InvoiceError::InvalidInput);
         }
@@ -533,6 +543,7 @@ impl InvoiceContract {
             invoice.payment_confirmation = true;
             invoice.previous_invoice_hash = invoice.txn_hash.clone();
             invoice.txn_hash = txn_hash;
+            invoice.timestamp=timestamp;
             // invoice.timestamp = env.ledger().timestamp();
 
             state.set(mongo_id.clone(), invoice.clone());
