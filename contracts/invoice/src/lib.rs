@@ -609,9 +609,12 @@ impl InvoiceContract {
     }
 
     /// Retrieve invoice data
-    pub fn query_invoice(env: Env, mongo_id: String) -> Option<Invoice> {
+    pub fn query_invoice(env: Env, mongo_id: String) -> Result<Invoice,InvoiceError> {
         let state = Self::get_invoice_storage(&env);
-        state.get(mongo_id)
+        if let Some(invoice) = state.get(mongo_id) {
+            return Ok(invoice);
+        }
+        return Err(InvoiceError::NotFound)
     }
 
     pub fn query_all_invoices(env: Env) -> Result<Vec<Invoice>, InvoiceError> {
