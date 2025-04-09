@@ -9,7 +9,7 @@ const INVOICE_MAP: Symbol = symbol_short!("MAP");
 const INVOICE_HISTORY_MAP: Symbol = symbol_short!("HISTORY");
 
 #[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone)]
 pub struct Track {
     pub subject: String,
     pub status: String,
@@ -19,8 +19,7 @@ pub struct Track {
     pub to: String,
 }
 #[contracterror]
-#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
-#[repr(u32)]
+#[derive( Clone)]
 pub enum InvoiceError {
     NotFound = 4004,
     InvoiceAlreadyExists = 1002,
@@ -36,7 +35,7 @@ pub enum InvoiceError {
 }
 
 #[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone)]
 pub struct Invoice {
     pub inv_type: String,
     pub vendor_id: String,
@@ -174,7 +173,6 @@ impl InvoiceContract {
             || invoice_input.lines.is_empty()
             || invoice_input.net_amt.is_empty()
             || invoice_input.txn_hash.is_empty()
-            || invoice_input.timestamp==0
             || invoice_input.due_date.is_empty()
         {
             log!(&env, "Error: One or more input fields are empty");
@@ -218,8 +216,8 @@ impl InvoiceContract {
             voided: false,
             sent_invoice_deleted: false,
             received_invoice_deleted: false,
-            timestamp: invoice_input.timestamp,
-            // timestamp: env.ledger().timestamp(),
+            // timestamp: invoice_input.timestamp,
+            timestamp: env.ledger().timestamp(),
             previous_invoice_hash: String::from_str(&env, ""),
             txn_hash: invoice_input.txn_hash,
             due_date: invoice_input.due_date,
@@ -252,9 +250,8 @@ impl InvoiceContract {
         mongo_id: String,
         action: String,
         txn_hash: String,
-        timestamp: u64,
     ) -> Result<String, InvoiceError> {
-        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty() ||timestamp==0{
+        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty() {
             log!(&env, "Error: One or more input fields are empty");
             return Err(InvoiceError::InvalidInput);
         }
@@ -282,8 +279,8 @@ impl InvoiceContract {
             invoice.ack = true;
             invoice.previous_invoice_hash = invoice.txn_hash.clone();
             invoice.txn_hash = txn_hash;
-            invoice.timestamp=timestamp;
-            // invoice.timestamp = env.ledger().timestamp();
+            // invoice.timestamp=timestamp;
+            invoice.timestamp = env.ledger().timestamp();
 
             state.set(mongo_id.clone(), invoice.clone());
             Self::save_invoice_storage(&env, &state);
@@ -306,9 +303,8 @@ impl InvoiceContract {
         mongo_id: String,
         action: String,
         txn_hash: String,
-        timestamp: u64,
     ) -> Result<String, InvoiceError> {
-        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty() ||timestamp==0 {
+        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty()  {
             log!(&env, "Error: One or more input fields are empty");
             return Err(InvoiceError::InvalidInput);
         }
@@ -335,8 +331,8 @@ impl InvoiceContract {
             invoice.ack = true;
             invoice.previous_invoice_hash = invoice.txn_hash.clone();
             invoice.txn_hash = txn_hash;
-            invoice.timestamp=timestamp;
-            // invoice.timestamp = env.ledger().timestamp();
+            // invoice.timestamp=timestamp;
+            invoice.timestamp = env.ledger().timestamp();
 
             state.set(mongo_id.clone(), invoice.clone());
             Self::save_invoice_storage(&env, &state);
@@ -358,9 +354,8 @@ impl InvoiceContract {
         mongo_id: String,
         action: String,
         txn_hash: String,
-        timestamp: u64,
     ) -> Result<String, InvoiceError> {
-        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty()||timestamp==0 {
+        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty() {
             log!(&env, "Error: One or more input fields are empty");
             return Err(InvoiceError::InvalidInput);
         }
@@ -386,8 +381,8 @@ impl InvoiceContract {
             invoice.rejected = true;
             invoice.previous_invoice_hash = invoice.txn_hash.clone();
             invoice.txn_hash = txn_hash;
-            invoice.timestamp=timestamp;
-            // invoice.timestamp = env.ledger().timestamp();
+            // invoice.timestamp=timestamp;
+            invoice.timestamp = env.ledger().timestamp();
 
             state.set(mongo_id.clone(), invoice.clone());
             Self::save_invoice_storage(&env, &state);
@@ -409,9 +404,8 @@ impl InvoiceContract {
         mongo_id: String,
         action: String,
         txn_hash: String,
-        timestamp: u64,
     ) -> Result<String, InvoiceError> {
-        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty()||timestamp==0 {
+        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty(){
             log!(&env, "Error: One or more input fields are empty");
             return Err(InvoiceError::InvalidInput);
         }
@@ -436,8 +430,8 @@ impl InvoiceContract {
             invoice.voided = true;
             invoice.previous_invoice_hash = invoice.txn_hash.clone();
             invoice.txn_hash = txn_hash;
-            invoice.timestamp=timestamp;
-            // invoice.timestamp = env.ledger().timestamp();
+            // invoice.timestamp=timestamp;
+            invoice.timestamp = env.ledger().timestamp();
 
             state.set(mongo_id.clone(), invoice.clone());
             Self::save_invoice_storage(&env, &state);
@@ -460,9 +454,8 @@ impl InvoiceContract {
         finance_id: String,
         action: String,
         txn_hash: String,
-        timestamp: u64,
     ) -> Result<String, InvoiceError> {
-        if mongo_id.is_empty() || action.is_empty() || finance_id.is_empty() || txn_hash.is_empty()|| timestamp==0
+        if mongo_id.is_empty() || action.is_empty() || finance_id.is_empty() || txn_hash.is_empty()
         {
             log!(&env, "Error: One or more input fields are empty");
             return Err(InvoiceError::InvalidInput);
@@ -491,8 +484,8 @@ impl InvoiceContract {
             invoice.financing_details.push_back(finance_id);
             invoice.previous_invoice_hash = invoice.txn_hash.clone();
             invoice.txn_hash = txn_hash;
-            invoice.timestamp=timestamp;
-            // invoice.timestamp = env.ledger().timestamp();
+            // invoice.timestamp=timestamp;
+            invoice.timestamp = env.ledger().timestamp();
 
             state.set(mongo_id.clone(), invoice.clone());
             Self::save_invoice_storage(&env, &state);
@@ -514,9 +507,8 @@ impl InvoiceContract {
         mongo_id: String,
         action: String,
         txn_hash: String,
-        timestamp: u64,
     ) -> Result<String, InvoiceError> {
-        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty()|| timestamp==0 {
+        if mongo_id.is_empty() || action.is_empty() || txn_hash.is_empty(){
             log!(&env, "Error: One or more input fields are empty");
             return Err(InvoiceError::InvalidInput);
         }
@@ -543,8 +535,8 @@ impl InvoiceContract {
             invoice.payment_confirmation = true;
             invoice.previous_invoice_hash = invoice.txn_hash.clone();
             invoice.txn_hash = txn_hash;
-            invoice.timestamp=timestamp;
-            // invoice.timestamp = env.ledger().timestamp();
+            // invoice.timestamp=timestamp;
+            invoice.timestamp = env.ledger().timestamp();
 
             state.set(mongo_id.clone(), invoice.clone());
             Self::save_invoice_storage(&env, &state);
@@ -621,8 +613,15 @@ impl InvoiceContract {
         let state = Self::get_invoice_storage(&env);
         let mut invoices = Vec::new(&env);
 
-        for (_, invoice) in state.iter() {
-            invoices.push_back(invoice.clone());
+        let keys_vec = state.keys(); 
+
+        let len = keys_vec.len();
+
+        for i in 0..len {
+            let key = keys_vec.get(i).unwrap(); 
+            if let Some(invoice) = state.get(key) {
+                invoices.push_back(invoice);
+            }
         }
 
         if invoices.is_empty() {
@@ -645,9 +644,15 @@ impl InvoiceContract {
         let state = Self::get_invoice_storage(&env);
         let mut matched_invoices = Vec::new(&env);
 
-        for (_, invoice) in state.iter() {
-            if invoice.txn_hash == txn_hash {
-                matched_invoices.push_back(invoice.clone());
+        let keys_vec = state.keys(); 
+        let len = keys_vec.len();
+
+        for i in 0..len {
+            let key = keys_vec.get(i).unwrap(); 
+            if let Some(invoice) = state.get(key) {
+                if invoice.txn_hash == txn_hash {
+                    matched_invoices.push_back(invoice);
+                }
             }
         }
 
@@ -657,6 +662,7 @@ impl InvoiceContract {
 
         return Ok(matched_invoices);
     }
+    
 
     pub fn query_by_vendor_emailhash(
         env: Env,
@@ -665,9 +671,15 @@ impl InvoiceContract {
         let state = Self::get_invoice_storage(&env);
         let mut matched_invoices = Vec::new(&env);
 
-        for (_, invoice) in state.iter() {
-            if invoice.vendor_email_hash == email_hash {
-                matched_invoices.push_back(invoice.clone());
+        let keys_vec = state.keys(); 
+        let len = keys_vec.len();
+
+        for i in 0..len {
+            let key = keys_vec.get(i).unwrap(); 
+            if let Some(invoice) = state.get(key) {
+                if invoice.vendor_email_hash == email_hash {
+                    matched_invoices.push_back(invoice);
+                }
             }
         }
 
@@ -685,9 +697,15 @@ impl InvoiceContract {
         let state = Self::get_invoice_storage(&env);
         let mut matched_invoices = Vec::new(&env);
 
-        for (_, invoice) in state.iter() {
-            if invoice.vendor_mobile_hash == mobile_hash {
-                matched_invoices.push_back(invoice.clone());
+        let keys_vec = state.keys(); 
+        let len = keys_vec.len();
+
+        for i in 0..len {
+            let key = keys_vec.get(i).unwrap(); 
+            if let Some(invoice) = state.get(key) {
+                if invoice.vendor_mobile_hash == mobile_hash {
+                    matched_invoices.push_back(invoice);
+                }
             }
         }
 
@@ -700,7 +718,7 @@ impl InvoiceContract {
 
     pub fn query_total_invoice_count(env: Env) -> u32 {
         let state = Self::get_invoice_storage(&env);
-        state.iter().count() as u32
+        state.keys().len() as u32
     }
 }
 
