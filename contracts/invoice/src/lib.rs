@@ -25,6 +25,7 @@ pub enum InvoiceError {
     InvoiceAlreadyExists = 1002,
     InvoiceNotAcknowledged = 1003,
     InvoiceAlreadyDeleted = 1004,
+    AlreadyFinanced=1005,
     InvoiceAcknowledged = 2001,
     InvoiceFinanced = 2002,
     InvoicePaid = 2003,
@@ -477,6 +478,15 @@ impl InvoiceContract {
                 false,
             ) {
                 return Err(error);
+            }
+
+            let finance_len= invoice.financing_details.len();
+            for i in 0..finance_len {
+                let key = invoice.financing_details.get(i).unwrap(); 
+                if key==finance_id {
+                    log!(&env, "Duplicate finance_id {} for invoice {}", finance_id, mongo_id);
+                    return Err(InvoiceError::AlreadyFinanced);
+                }
             }
 
             invoice.action = action;
